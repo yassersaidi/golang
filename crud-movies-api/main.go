@@ -7,6 +7,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"os"
 	"strconv"
 )
 
@@ -26,24 +27,6 @@ var movies []Movie
 
 func main() {
 	r := mux.NewRouter()
-	movies = append(movies, Movie{
-		Id:    "1",
-		Isbn:  "74",
-		Title: "Dune",
-		Director: &Director{
-			Firstname: "Yasser",
-			Lastname:  "SAIDI",
-		},
-	})
-	movies = append(movies, Movie{
-		Id:    "2",
-		Isbn:  "73",
-		Title: "Avengers",
-		Director: &Director{
-			Firstname: "Bla",
-			Lastname:  "Blaa",
-		},
-	})
 
 	r.HandleFunc("/movies", getMovies).Methods("GET")
 	r.HandleFunc("/movies/{id}", getMovie).Methods("GET")
@@ -58,16 +41,20 @@ func main() {
 
 func getMovies(response http.ResponseWriter, request *http.Request) {
 	response.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(response).Encode(movies)
+	moviesData := readData("./movies.json", &movies)
+
+	json.NewEncoder(response).Encode(moviesData)
 }
 
 func deleteMovie(response http.ResponseWriter, request *http.Request) {
 	response.Header().Set("Content-Type", "application/json")
 	params := mux.Vars(request)
+	moviesData := readData("./movies.json", &movies)
 
-	for index, item := range movies {
+	for index, item := range moviesData {
 		if item.Id == params["id"] {
 			movies = append(movies[:index], movies[index+1:]...)
+			writeData("./movies.json", movies)
 			break
 		}
 	}
@@ -78,8 +65,9 @@ func deleteMovie(response http.ResponseWriter, request *http.Request) {
 func getMovie(response http.ResponseWriter, request *http.Request) {
 	response.Header().Set("Content-Type", "application/json")
 	params := mux.Vars(request)
+	moviesData := readData("./movies.json", &movies)
 
-	for _, item := range movies {
+	for _, item := range moviesData {
 		if item.Id == params["id"] {
 			json.NewEncoder(response).Encode(item)
 			return
@@ -94,23 +82,51 @@ func createMovie(response http.ResponseWriter, request *http.Request) {
 
 	movie.Id = strconv.Itoa(rand.Intn(1000000))
 	movies = append(movies, movie)
-
+	writeData("./movies.json", movies)
 	json.NewEncoder(response).Encode(movie)
 }
 
 func updateMovie(response http.ResponseWriter, request *http.Request) {
 	response.Header().Set("Content-Type", "application/json")
 	params := mux.Vars(request)
+	moviesData := readData("./movies.json", &movies)
 
-	for index, item := range movies {
+	for index, item := range moviesData {
 		if item.Id == params["id"] {
 			movies = append(movies[:index], movies[index+1:]...)
 			var movie Movie
 			_ = json.NewDecoder(request.Body).Decode(&movie)
 			movie.Id = params["id"]
 			movies = append(movies, movie)
+			writeData("./movies.json", movies)
 			json.NewEncoder(response).Encode(movie)
 			return
 		}
+	}
+
+}
+
+func readData[T any](path string, parsedTo *[]T) []T {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = json.Unmarshal(data, parsedTo)
+	if err != nil {
+		log.Fatal("Error during Unmarshal(): ", err)
+	}
+
+	return *parsedTo
+}
+
+func writeData[T any](path string, data []T) {
+	dataToWrite, err := json.MarshalIndent(data, "", " ")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	writeErr := os.WriteFile(path, dataToWrite, os.ModeAppend)
+	if writeErr != nil {
+		log.Fatal(writeErr)
 	}
 }

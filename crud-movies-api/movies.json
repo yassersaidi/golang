@@ -1,0 +1,35 @@
+[
+ {
+  "id": "825439",
+  "isbn": "",
+  "title": "",
+  "director": null
+ },
+ {
+  "id": "217068",
+  "isbn": "744df4g4",
+  "title": "Due",
+  "director": {
+   "firstname": "Yasser",
+   "lastname": "SAIDI"
+  }
+ },
+ {
+  "id": "368448",
+  "isbn": "744df4g4",
+  "title": "Due",
+  "director": {
+   "firstname": "Yasser",
+   "lastname": "SAIDI"
+  }
+ },
+ {
+  "id": "926226",
+  "isbn": "744df4g4",
+  "title": "Duei",
+  "director": {
+   "firstname": "Yasser",
+   "lastname": "SAIDI"
+  }
+ }
+]
